@@ -38,7 +38,7 @@ type Pingu struct {
 }
 
 func NewPingu(conn *net.UDPConn, cfg Config) Pingu {
-	if cfg.RecvBufferSize == 0 {
+	if cfg.RecvBufferSize == 0 && cfg.Verbose {
 		cfg.Default()
 	}
 	if cfg.RecvBufferSize < 1 {
