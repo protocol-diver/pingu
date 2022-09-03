@@ -15,8 +15,7 @@ $ go get -u github.com/dbadoy/pingu
 
 ### Create your Pingu
 ```go
-// udpConn: *net.UDPConn
-myPingu := pingu.NewPingu(udpConn, pingu.Config{})
+myPingu, err := pingu.NewPingu("127.0.0.1:4874", nil)
 
 // You could preconfig like below,
 pingu.Config{
@@ -28,17 +27,17 @@ pingu.Config{
 ### Embed into your Server
 ```go
 type Server struct {
-  conn *net.TCPConn
-  pingu pingu.Pingu
+  conn  *net.TCPConn
+  pingu *pingu.Pingu
 }
 ```
 
 ### Register other Pingus
 ```go
-if err := myPingu.Register("127.0.0.1:8551"); err != nil {
+if err := myPingu.RegisterWithRawAddr("127.0.0.1:4875"); err != nil {
   return err
 }
-if err := myPingu.Register("127.0.0.1:8552"); err != nil {
+if err := myPingu.RegisterWithRawAddr("127.0.0.1:4876"); err != nil {
   return err
 }
 ```
