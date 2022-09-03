@@ -55,7 +55,7 @@ if err != nil {
 }
 ```
 
-### Watching Pingu Working
+### Watch Pingu Working
 ```go
 // It's returns map[string]bool.
 // Mapping string ip:port to health status.
