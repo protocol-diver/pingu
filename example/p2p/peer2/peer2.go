@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"net"
-	"pingu"
 	"time"
+
+	"github.com/dbadoy/pingu"
 )
 
 func main() {

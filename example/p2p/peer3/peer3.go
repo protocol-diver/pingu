@@ -3,15 +3,18 @@ package main
 import (
 	"fmt"
 	"net"
-	"pingu"
 	"time"
+
+	"github.com/dbadoy/pingu"
 )
 
 func main() {
-	client, _ := net.ListenUDP("udp", &net.UDPAddr{IP: net.IP{127, 0, 0, 1}, Port: 8753})
+	client, _ := net.ListenUDP("udp", &net.UDPAddr{IP: net.IP{127, 0, 0, 1}, Port: 8755})
 	p := pingu.NewPingu(client, pingu.Config{})
 	p.Start()
 
+	// peer1
+	p.Register("127.0.0.1:8753")
 	// peer2
 	p.Register("127.0.0.1:8754")
 	ticker := time.NewTicker(5 * time.Second)

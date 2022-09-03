@@ -3,8 +3,9 @@ package example
 import (
 	"net"
 	"net/netip"
-	"pingu"
 	"time"
+
+	"github.com/dbadoy/pingu"
 )
 
 type TCPServer struct {
