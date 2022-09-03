@@ -6,6 +6,6 @@ type Config struct {
 }
 
 func (c *Config) Default() {
-	c.RecvBufferSize = 512
+	c.RecvBufferSize = 256
 	c.Verbose = false
 }
