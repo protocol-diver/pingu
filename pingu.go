@@ -58,8 +58,8 @@ func (p *Pingu) Start() {
 	if atomic.LoadUint32(&p.isRun) == 1 {
 		return
 	}
-	go p.detectLoop()
 	atomic.StoreUint32(&p.isRun, 1)
+	go p.detectLoop()
 }
 
 func (p *Pingu) Stop() {
