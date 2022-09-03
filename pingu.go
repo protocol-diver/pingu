@@ -20,11 +20,14 @@ const (
 	// NotificationType
 
 	MaxPacketSize = 4
+
+	localhost   = "127.0.0.1"
+	defaultPort = 4874
 )
 
 type Pingu struct {
 	conn *net.UDPConn
-	cfg  Config
+	cfg  *Config
 
 	// Pingu has full open about ping request. If recv ping, always send pong.
 	// But if recv pong from not exist in white list, it won't store even if
@@ -43,21 +46,30 @@ type Pingu struct {
 	stop chan struct{}
 }
 
-func NewPingu(conn *net.UDPConn, cfg Config) Pingu {
-	if cfg.RecvBufferSize == 0 && cfg.Verbose {
+func DefaultAddress() string {
+	return fmt.Sprintf("%s:%d", localhost, defaultPort)
+}
+
+func NewPingu(rawAddr string, cfg *Config) (*Pingu, error) {
+	if cfg == nil {
+		cfg = new(Config)
 		cfg.Default()
 	}
 	if cfg.RecvBufferSize < 1 {
 		cfg.RecvBufferSize = 256
 	}
-	return Pingu{
+	conn, err := listenWithRawAddr(rawAddr)
+	if err != nil {
+		return nil, err
+	}
+	return &Pingu{
 		conn:      conn,
 		cfg:       cfg,
 		wl:        make(map[string]bool),
 		peers:     make(map[string]bool),
 		stop:      make(chan struct{}, 1),
 		recvPongs: make(chan Packet, cfg.RecvBufferSize),
-	}
+	}, nil
 }
 
 func (p *Pingu) Start() {
@@ -323,4 +335,12 @@ func rawAddrToUDPAddr(s string) (*net.UDPAddr, error) {
 func mustAddrToUDPAddr(s string) *net.UDPAddr {
 	rawAddr := netip.MustParseAddrPort(s)
 	return net.UDPAddrFromAddrPort(rawAddr)
+}
+
+func listenWithRawAddr(rawAddr string) (*net.UDPConn, error) {
+	addr, err := rawAddrToUDPAddr(rawAddr)
+	if err != nil {
+		return nil, err
+	}
+	return net.ListenUDP("udp", addr)
 }

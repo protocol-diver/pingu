@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/dbadoy/pingu"
 )
 
 func main() {
-	client, _ := net.ListenUDP("udp", &net.UDPAddr{IP: net.IP{127, 0, 0, 1}, Port: 8754})
-	p := pingu.NewPingu(client, pingu.Config{})
+	p, err := pingu.NewPingu("127.0.0.1:8754", nil)
+	if err != nil {
+		return
+	}
 	p.Start()
 
 	// peer1
