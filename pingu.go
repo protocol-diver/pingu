@@ -299,7 +299,7 @@ func (p *Pingu) pong(addrs []*net.UDPAddr) {
 }
 
 // [Benchmark]
-//		net.ResolveUDPAddr									10000000                151.0 ns/op
+//		net.ResolveUDPAddr					10000000                151.0 ns/op
 //		netip.MustParseAddrPort, net.UDPAddrFromAddrPort	10000000                62.55 ns/op
 func rawAddrToUDPAddr(s string) (*net.UDPAddr, error) {
 	rawAddr, err := netip.ParseAddrPort(s)
