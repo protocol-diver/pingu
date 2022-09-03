@@ -35,6 +35,9 @@ type Pingu struct {
 }
 
 func NewPingu(conn *net.UDPConn, cfg Config) Pingu {
+	if cfg.RecvBufferSize == 0 {
+		cfg.Default()
+	}
 	if cfg.RecvBufferSize < 1 {
 		cfg.RecvBufferSize = 256
 	}
@@ -49,15 +52,12 @@ func NewPingu(conn *net.UDPConn, cfg Config) Pingu {
 }
 
 func (p *Pingu) Start() {
-	p.stop = make(chan struct{})
-
 	go p.detectLoop()
 }
 
 func (p *Pingu) Stop() {
 	p.peers = make(map[string]bool)
-
-	close(p.stop)
+	p.stop <- struct{}{}
 }
 
 func (p *Pingu) detectLoop() {
