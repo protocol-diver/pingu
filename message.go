@@ -8,7 +8,6 @@ package pingu
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net"
 )
@@ -78,7 +77,7 @@ func SuitableUnpack(b []byte, packet Packet) error {
 	byt := make([]byte, len)
 	copy(byt[:], b[prefixSize:prefixSize+len])
 	if err := json.Unmarshal(byt, packet); err != nil {
-		return errors.New("invalid packet data")
+		return fmt.Errorf("invalid packet data: %v", err)
 	}
 	return nil
 }

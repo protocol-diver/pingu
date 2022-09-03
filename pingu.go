@@ -150,8 +150,7 @@ func (p *Pingu) Register(addr *net.UDPAddr) {
 }
 
 func (p *Pingu) RegisterWithRawAddr(raw string) error {
-	_, err := rawAddrToUDPAddr(raw)
-	if err != nil {
+	if _, err := rawAddrToUDPAddr(raw); err != nil {
 		return err
 	}
 	p.register(raw)
@@ -164,8 +163,7 @@ func (p *Pingu) Unregister(addr *net.UDPAddr) {
 }
 
 func (p *Pingu) UnregisterWithRawAddr(raw string) error {
-	_, err := rawAddrToUDPAddr(raw)
-	if err != nil {
+	if _, err := rawAddrToUDPAddr(raw); err != nil {
 		return err
 	}
 	p.unregister(raw)
