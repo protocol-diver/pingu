@@ -11,7 +11,7 @@ import (
 
 const (
 	PingType = 1 + iota
-	NotificationType
+	// NotificationType
 
 	MaxPacketSize = 4
 )
@@ -29,7 +29,7 @@ type Pingu struct {
 	// The health status set when the ping-pong request completes
 	peers map[string]bool
 
-	queue chan Packet
+	recvPongs chan Packet
 
 	isRun uint32
 	mu    sync.Mutex
@@ -45,12 +45,12 @@ func NewPingu(conn *net.UDPConn, cfg Config) Pingu {
 		cfg.RecvBufferSize = 256
 	}
 	return Pingu{
-		conn:  conn,
-		cfg:   cfg,
-		wl:    make(map[string]bool),
-		peers: make(map[string]bool),
-		stop:  make(chan struct{}, 1),
-		queue: make(chan Packet, cfg.RecvBufferSize),
+		conn:      conn,
+		cfg:       cfg,
+		wl:        make(map[string]bool),
+		peers:     make(map[string]bool),
+		stop:      make(chan struct{}, 1),
+		recvPongs: make(chan Packet, cfg.RecvBufferSize),
 	}
 }
 
@@ -69,6 +69,14 @@ func (p *Pingu) Stop() {
 	p.peers = make(map[string]bool)
 	atomic.StoreUint32(&p.isRun, 0)
 	p.stop <- struct{}{}
+}
+
+func (p *Pingu) RemoteAddr() net.Addr {
+	return p.conn.LocalAddr()
+}
+
+func (p *Pingu) LocalAddr() net.Addr {
+	return p.conn.LocalAddr()
 }
 
 func (p *Pingu) detectLoop() {
@@ -103,7 +111,7 @@ func (p *Pingu) detectLoop() {
 				case Ping:
 					go p.pong([]*net.UDPAddr{sender})
 				case Pong:
-					p.queue <- packet
+					p.recvPongs <- packet
 				default:
 					panic(fmt.Sprintf("detected invalid protocol: invalid packet type %v", packet.Kind()))
 				}
@@ -266,21 +274,18 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) {
 			for rawAdrr := range tempSnapTable {
 				p.peers[rawAdrr] = false
 			}
-			// Logging for test.
 			if p.cfg.Verbose {
 				fmt.Println(p.snapPingTable())
 			}
 			return
-		case r := <-p.queue:
-			if r.Kind() == Pong {
-				rawAddr := (*r.Sender()).String()
-				p.mu.Lock()
-				if p.wl[rawAddr] {
-					p.peers[rawAddr] = true
-				}
-				p.mu.Unlock()
-				delete(tempSnapTable, rawAddr)
+		case r := <-p.recvPongs:
+			rawAddr := (*r.Sender()).String()
+			p.mu.Lock()
+			if p.wl[rawAddr] {
+				p.peers[rawAddr] = true
 			}
+			p.mu.Unlock()
+			delete(tempSnapTable, rawAddr)
 		}
 	}
 }
