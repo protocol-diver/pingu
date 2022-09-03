@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/netip"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -29,6 +30,8 @@ type Pingu struct {
 	peers map[string]bool
 
 	queue chan Packet
+
+	isRun uint32
 	mu    sync.Mutex
 
 	stop chan struct{}
@@ -52,11 +55,19 @@ func NewPingu(conn *net.UDPConn, cfg Config) Pingu {
 }
 
 func (p *Pingu) Start() {
+	if atomic.LoadUint32(&p.isRun) == 1 {
+		return
+	}
 	go p.detectLoop()
+	atomic.StoreUint32(&p.isRun, 1)
 }
 
 func (p *Pingu) Stop() {
+	if atomic.LoadUint32(&p.isRun) == 0 {
+		return
+	}
 	p.peers = make(map[string]bool)
+	atomic.StoreUint32(&p.isRun, 0)
 	p.stop <- struct{}{}
 }
 
