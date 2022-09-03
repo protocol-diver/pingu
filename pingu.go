@@ -50,17 +50,20 @@ func DefaultAddress() string {
 	return fmt.Sprintf("%s:%d", localhost, defaultPort)
 }
 
+// Pingu is not accept double use to net.UDPConn. It's should only be used once.
+// For avoid confuse, generate net.UDPConn in NewPingu.
 func NewPingu(rawAddr string, cfg *Config) (*Pingu, error) {
+	conn, err := listenWithRawAddr(rawAddr)
+	if err != nil {
+		return nil, err
+	}
+	// Works if succed generate net.UDPConn.
 	if cfg == nil {
 		cfg = new(Config)
 		cfg.Default()
 	}
 	if cfg.RecvBufferSize < 1 {
 		cfg.RecvBufferSize = 256
-	}
-	conn, err := listenWithRawAddr(rawAddr)
-	if err != nil {
-		return nil, err
 	}
 	return &Pingu{
 		conn:      conn,
@@ -89,18 +92,13 @@ func (p *Pingu) Stop() {
 	p.stop <- struct{}{}
 }
 
-func (p *Pingu) RemoteAddr() net.Addr {
-	return p.conn.LocalAddr()
-}
-
-func (p *Pingu) LocalAddr() net.Addr {
-	return p.conn.LocalAddr()
-}
-
 func (p *Pingu) detectLoop() {
 	for {
 		select {
 		case <-p.stop:
+			if p.cfg.Verbose {
+				fmt.Println("[pingu] recv close signal")
+			}
 			return
 		default:
 			b := make([]byte, MaxPacketSize)
@@ -110,7 +108,7 @@ func (p *Pingu) detectLoop() {
 			}
 			if err != nil {
 				if p.cfg.Verbose {
-					fmt.Printf("server: ReadFromUDP error: %v", err)
+					fmt.Printf("[pingu] ReadFromUDP error %v", err)
 				}
 				continue
 			}
@@ -121,7 +119,7 @@ func (p *Pingu) detectLoop() {
 				packet, err := ParsePacket(b, sender)
 				if err != nil {
 					if p.cfg.Verbose {
-						fmt.Printf("detected invalid protocol, reason : %v\n", err)
+						fmt.Printf("[pingu] detected invalid protocol, reason : %v\n", err)
 					}
 					return
 				}
@@ -131,53 +129,87 @@ func (p *Pingu) detectLoop() {
 				case Pong:
 					p.recvPongs <- packet
 				default:
-					panic(fmt.Sprintf("detected invalid protocol: invalid packet type %v", packet.Kind()))
+					panic(fmt.Sprintf("[pingu] detected invalid protocol: invalid packet type %v", packet.Kind()))
 				}
 			}(sender)
 		}
 	}
 }
 
+func (p *Pingu) RemoteAddr() net.Addr {
+	return p.conn.LocalAddr()
+}
+
+func (p *Pingu) LocalAddr() net.Addr {
+	return p.conn.LocalAddr()
+}
+
 // Register is register to broadcast list that input address.
-func (p *Pingu) Register(raw string) error {
+func (p *Pingu) Register(addr *net.UDPAddr) {
+	p.register(addr.String())
+}
+
+func (p *Pingu) RegisterWithRawAddr(raw string) error {
 	_, err := rawAddrToUDPAddr(raw)
 	if err != nil {
 		return err
 	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.wl[raw] = true
+	p.register(raw)
 	return nil
 }
 
 // Unregister is remove input address from broadcast list.
-func (p *Pingu) Unregister(raw string) error {
+func (p *Pingu) Unregister(addr *net.UDPAddr) {
+	p.unregister(addr.String())
+}
+
+func (p *Pingu) UnregisterWithRawAddr(raw string) error {
 	_, err := rawAddrToUDPAddr(raw)
 	if err != nil {
 		return err
 	}
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.wl[raw] = false
+	p.unregister(raw)
 	return nil
 }
 
-func (p *Pingu) PingPong(raw string, timeout time.Duration) error {
+// PingPong sends a 'ping' and waits for a 'pong' to be received.
+func (p *Pingu) PingPong(addr *net.UDPAddr, timeout time.Duration) error {
+	return p.pingpong(addr, timeout)
+}
+
+func (p *Pingu) PingPongWithRawAddr(raw string, timeout time.Duration) error {
 	addr, err := rawAddrToUDPAddr(raw)
 	if err != nil {
 		return err
 	}
+	return p.pingpong(addr, timeout)
+}
+
+func (p *Pingu) register(rawAddr string) {
 	p.mu.Lock()
-	registered := p.wl[raw]
+	defer p.mu.Unlock()
+	p.wl[rawAddr] = true
+}
+
+func (p *Pingu) unregister(rawAddr string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.wl[rawAddr] = false
+}
+
+func (p *Pingu) pingpong(addr *net.UDPAddr, timeout time.Duration) error {
+	rawAddr := addr.String()
+	p.mu.Lock()
+	registered := p.wl[rawAddr]
 	p.mu.Unlock()
 
 	if !registered {
-		return fmt.Errorf("not registered ip: %v" + raw)
+		return fmt.Errorf("not registered ip: %v" + rawAddr)
 	}
 
 	p.ping([]*net.UDPAddr{addr}, timeout)
-	if !p.IsAlive(raw) {
-		return fmt.Errorf("ping-pong failed ip: %v, timeout: %v", raw, timeout)
+	if !p.IsAlive(rawAddr) {
+		return fmt.Errorf("ping-pong failed ip: %v, timeout: %v", rawAddr, timeout)
 	}
 	return nil
 }
@@ -221,7 +253,7 @@ func (p *Pingu) PingTable() map[string]bool {
 	return p.snapPingTable()
 }
 
-// snapPingTable returns deep copied snapshot about broadcast list.
+// snapPingTable returns deep copied map about broadcast list.
 //
 // The caller must hold b.mu.
 func (p *Pingu) snapPingTable() (r map[string]bool) {
@@ -241,7 +273,7 @@ func (p *Pingu) broadcast(t byte, timeout time.Duration) {
 	p.mu.Unlock()
 	if len(addrs) == 0 {
 		if p.cfg.Verbose {
-			fmt.Println("pingu: there is no target")
+			fmt.Println("[pingu] there is no target")
 		}
 		return
 	}
@@ -249,7 +281,7 @@ func (p *Pingu) broadcast(t byte, timeout time.Duration) {
 	case PingType:
 		p.ping(addrs, timeout)
 	default:
-		panic(fmt.Sprintf("detected invalid protocol: invalid packet type %v", t))
+		panic(fmt.Sprintf("[pingu] detected invalid protocol: invalid packet type %v", t))
 	}
 }
 
@@ -293,7 +325,7 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) {
 				p.peers[rawAdrr] = false
 			}
 			if p.cfg.Verbose {
-				fmt.Println(p.snapPingTable())
+				fmt.Println("[pingu] ", p.snapPingTable())
 			}
 			return
 		case r := <-p.recvPongs:

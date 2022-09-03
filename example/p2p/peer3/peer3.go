@@ -15,9 +15,9 @@ func main() {
 	p.Start()
 
 	// peer1
-	p.Register("127.0.0.1:8753")
+	p.RegisterWithRawAddr("127.0.0.1:8753")
 	// peer2
-	p.Register("127.0.0.1:8754")
+	p.RegisterWithRawAddr("127.0.0.1:8754")
 	ticker := time.NewTicker(5 * time.Second)
 	_ = p.BroadcastPingWithTicker(*ticker, 5*time.Second)
 

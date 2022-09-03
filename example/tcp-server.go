@@ -24,15 +24,13 @@ func NewServer(conn *net.TCPConn) *TCPServer {
 	}
 }
 
-func (s *TCPServer) heartbeatLoop(addrs []string, ticker *time.Ticker) (chan struct{}, error) {
+func (s *TCPServer) heartbeatLoop(addrs []string, ticker *time.Ticker) chan struct{} {
 	s.pingu.Start()
 	for _, addr := range addrs {
 		rawAddr := netip.MustParseAddrPort(addr)
-		if err := s.pingu.Register(rawAddr.String()); err != nil {
-			return nil, err
-		}
+		s.pingu.Register(net.UDPAddrFromAddrPort(rawAddr))
 	}
-	return s.pingu.BroadcastPingWithTicker(*ticker, 3*time.Second), nil
+	return s.pingu.BroadcastPingWithTicker(*ticker, 3*time.Second)
 }
 
 func (s *TCPServer) stat() map[string]bool {
