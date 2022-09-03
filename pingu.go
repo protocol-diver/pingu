@@ -229,8 +229,6 @@ func (p *Pingu) broadcast(t byte, timeout time.Duration) {
 
 func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) {
 	for _, addr := range addrs {
-		// This can be use goroutine.
-		// I don't know better way about point of performance. Need basis.
 		packet := new(PingPacket)
 		packet.SetKind(Ping)
 		byt, _ := SuitablePack(packet)
@@ -289,8 +287,6 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) {
 
 func (p *Pingu) pong(addrs []*net.UDPAddr) {
 	for _, addr := range addrs {
-		// This can be use goroutine.
-		// I don't know better way about point of performance. Need basis.
 		packet := new(PongPacket)
 		packet.SetKind(Pong)
 		byt, _ := SuitablePack(packet)
