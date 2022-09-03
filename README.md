@@ -75,7 +75,7 @@ myPingu.Stop()
 // Continue previous BroadcastPingWithTicker if exist.
 myPingu.Start()
 
-// If you want stop the BroadcastPingWithTicker, you close the 'cancel'.
+// If you want stop the BroadcastPingWithTicker, close the 'cancel'.
 cancel, _ := myPingu.BroadcastPingWithTicker(*ticker, 3*time.Second)
 close(cancel)
 ```
