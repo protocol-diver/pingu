@@ -38,6 +38,7 @@ type PongPacket struct {
 	kind   byte
 }
 
+// ParsePacket parses packets received by other pingus.
 func ParsePacket(d []byte, sender *net.UDPAddr) (Packet, error) {
 	var r Packet
 	switch d[packetTypeIndex] {
@@ -49,7 +50,7 @@ func ParsePacket(d []byte, sender *net.UDPAddr) (Packet, error) {
 		return nil, fmt.Errorf("invalid packet type: %d", d[packetTypeIndex])
 	}
 
-	if err := SuitableUnpack(d, r); err != nil {
+	if err := SuitablePack(d, r); err != nil {
 		return nil, err
 	}
 	r.SetSender(sender)
@@ -57,9 +58,24 @@ func ParsePacket(d []byte, sender *net.UDPAddr) (Packet, error) {
 	return r, nil
 }
 
-// SuitablePack is change Packet to suitable protocol message.
+// SuitablePack is the logic for parse the UDP Payload.
+func SuitablePack(b []byte, packet Packet) error {
+	if !isValidPacketType(b[packetTypeIndex]) {
+		return fmt.Errorf("invalid packet type: %d", b[packetTypeIndex])
+	}
+	len := b[packetSizeIndex]
+	byt := make([]byte, len)
+	copy(byt[:], b[prefixSize:prefixSize+len])
+
+	if err := json.Unmarshal(byt, packet); err != nil {
+		return fmt.Errorf("invalid packet data: %v", err)
+	}
+	return nil
+}
+
+// SuitableUnpack is change Packet to suitable protocol message.
 // If send message, you must use this method.
-func SuitablePack(packet Packet) ([]byte, error) {
+func SuitableUnpack(packet Packet) ([]byte, error) {
 	if !isValidPacketType(packet.Kind()) {
 		return nil, fmt.Errorf("invalid packet type: %d", packet.Kind())
 	}
@@ -73,21 +89,6 @@ func SuitablePack(packet Packet) ([]byte, error) {
 	copy(result[2:], b[:])
 
 	return result, nil
-}
-
-// This is the logic for parse the Payload
-func SuitableUnpack(b []byte, packet Packet) error {
-	if !isValidPacketType(b[packetTypeIndex]) {
-		return fmt.Errorf("invalid packet type: %d", b[packetTypeIndex])
-	}
-	len := b[packetSizeIndex]
-	byt := make([]byte, len)
-	copy(byt[:], b[prefixSize:prefixSize+len])
-
-	if err := json.Unmarshal(byt, packet); err != nil {
-		return fmt.Errorf("invalid packet data: %v", err)
-	}
-	return nil
 }
 
 func isValidPacketType(b byte) bool {

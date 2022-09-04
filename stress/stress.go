@@ -45,7 +45,7 @@ func main() {
 			go func() {
 				ping := new(pingu.PingPacket)
 				ping.SetKind(pingu.Ping)
-				b, _ := pingu.SuitablePack(ping)
+				b, _ := pingu.SuitableUnpack(ping)
 				if _, err := client.WriteToUDP(b, net.UDPAddrFromAddrPort(netip.MustParseAddrPort("127.0.0.1:8771"))); err != nil {
 					return
 				}
@@ -54,7 +54,7 @@ func main() {
 				response := make([]byte, 4)
 				client.ReadFrom(response)
 				var pongPacket pingu.PongPacket
-				if err := pingu.SuitableUnpack(response, &pongPacket); err != nil {
+				if err := pingu.SuitablePack(response, &pongPacket); err != nil {
 					return
 				}
 				out <- struct{}{}

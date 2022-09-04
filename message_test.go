@@ -52,34 +52,6 @@ func TestParsePacket(t *testing.T) {
 }
 
 func TestSuitablePack(t *testing.T) {
-	// SuitablePack(packet Packet) ([]byte, error) {
-	type td struct {
-		got    pingu.Packet
-		expect []byte
-		err    string
-	}
-	tdl := []td{
-		{got: packet(pingu.Ping, new(pingu.PingPacket)), expect: []byte{0, 2, 123, 125}, err: ""},
-		{got: packet(pingu.Pong, new(pingu.PongPacket)), expect: []byte{1, 2, 123, 125}, err: ""},
-		{got: packet(2, new(pingu.PongPacket)), expect: nil, err: "invalid packet type: 2"},
-		{got: packet(3, new(pingu.PongPacket)), expect: nil, err: "invalid packet type: 3"},
-	}
-
-	for _, td := range tdl {
-		p, err := pingu.SuitablePack(td.got)
-		if err != nil {
-			if err.Error() != td.err {
-				t.Fatalf("ParsePacket failure got: %v, want: %v", err.Error(), td.err)
-			}
-			continue
-		}
-		if !bytes.Equal(p, td.expect) {
-			t.Fatalf("SuitablePack failure got: %v, want: %v", p, td.expect)
-		}
-	}
-}
-
-func TestSuitableUnpack(t *testing.T) {
 	//func SuitableUnpack(b []byte, packet Packet) error {
 	type td struct {
 		got    []byte
@@ -101,7 +73,7 @@ func TestSuitableUnpack(t *testing.T) {
 			pack = new(pingu.PongPacket)
 		}
 
-		err := pingu.SuitableUnpack(td.got, pack)
+		err := pingu.SuitablePack(td.got, pack)
 		if err != nil {
 			if err.Error() != td.err {
 				t.Fatalf("SuitableUnpack failure got: %v, want: %v", err.Error(), td.err)
@@ -110,6 +82,34 @@ func TestSuitableUnpack(t *testing.T) {
 		}
 		if reflect.TypeOf(pack) != reflect.TypeOf(td.expect) {
 			t.Fatalf("SuitableUnpack failure got: %v, want: %v", reflect.TypeOf(pack), reflect.TypeOf(td.expect))
+		}
+	}
+}
+
+func TestSuitableUnpack(t *testing.T) {
+	// SuitablePack(packet Packet) ([]byte, error) {
+	type td struct {
+		got    pingu.Packet
+		expect []byte
+		err    string
+	}
+	tdl := []td{
+		{got: packet(pingu.Ping, new(pingu.PingPacket)), expect: []byte{0, 2, 123, 125}, err: ""},
+		{got: packet(pingu.Pong, new(pingu.PongPacket)), expect: []byte{1, 2, 123, 125}, err: ""},
+		{got: packet(2, new(pingu.PongPacket)), expect: nil, err: "invalid packet type: 2"},
+		{got: packet(3, new(pingu.PongPacket)), expect: nil, err: "invalid packet type: 3"},
+	}
+
+	for _, td := range tdl {
+		p, err := pingu.SuitableUnpack(td.got)
+		if err != nil {
+			if err.Error() != td.err {
+				t.Fatalf("ParsePacket failure got: %v, want: %v", err.Error(), td.err)
+			}
+			continue
+		}
+		if !bytes.Equal(p, td.expect) {
+			t.Fatalf("SuitablePack failure got: %v, want: %v", p, td.expect)
 		}
 	}
 }

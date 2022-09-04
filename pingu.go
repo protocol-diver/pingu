@@ -288,7 +288,7 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) {
 	for _, addr := range addrs {
 		packet := new(PingPacket)
 		packet.SetKind(Ping)
-		byt, _ := SuitablePack(packet)
+		byt, _ := SuitableUnpack(packet)
 
 		if _, err := p.conn.WriteToUDP(byt, addr); err != nil {
 			fmt.Println(err)
@@ -343,7 +343,7 @@ func (p *Pingu) pong(addrs []*net.UDPAddr) {
 	for _, addr := range addrs {
 		packet := new(PongPacket)
 		packet.SetKind(Pong)
-		byt, _ := SuitablePack(packet)
+		byt, _ := SuitableUnpack(packet)
 
 		if _, err := p.conn.WriteToUDP(byt, addr); err != nil {
 			fmt.Println(err)
