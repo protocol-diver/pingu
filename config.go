@@ -6,12 +6,14 @@
 
 package pingu
 
+const DefultRecvBufferSize = 256
+
 type Config struct {
 	RecvBufferSize int
 	Verbose        bool
 }
 
 func (c *Config) Default() {
-	c.RecvBufferSize = 256
+	c.RecvBufferSize = DefultRecvBufferSize
 	c.Verbose = false
 }

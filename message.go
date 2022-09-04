@@ -60,6 +60,9 @@ func ParsePacket(d []byte, sender *net.UDPAddr) (Packet, error) {
 // SuitablePack is change Packet to suitable protocol message.
 // If send message, you must use this method.
 func SuitablePack(packet Packet) ([]byte, error) {
+	if !isValidPacketType(packet.Kind()) {
+		return nil, fmt.Errorf("invalid packet type: %d", packet.Kind())
+	}
 	b, err := json.Marshal(packet)
 	if err != nil {
 		return nil, err
@@ -68,18 +71,34 @@ func SuitablePack(packet Packet) ([]byte, error) {
 	result[packetTypeIndex] = packet.Kind()
 	result[packetSizeIndex] = byte(len(b))
 	copy(result[2:], b[:])
+
 	return result, nil
 }
 
 // This is the logic for parse the Payload
 func SuitableUnpack(b []byte, packet Packet) error {
+	if !isValidPacketType(b[packetTypeIndex]) {
+		return fmt.Errorf("invalid packet type: %d", b[packetTypeIndex])
+	}
 	len := b[packetSizeIndex]
 	byt := make([]byte, len)
 	copy(byt[:], b[prefixSize:prefixSize+len])
+
 	if err := json.Unmarshal(byt, packet); err != nil {
 		return fmt.Errorf("invalid packet data: %v", err)
 	}
 	return nil
+}
+
+func isValidPacketType(b byte) bool {
+	switch b {
+	case Ping:
+		return true
+	case Pong:
+		return true
+	default:
+		return false
+	}
 }
 
 func (p *PingPacket) SetSender(s *net.UDPAddr) { p.sender = s }
