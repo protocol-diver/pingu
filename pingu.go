@@ -87,9 +87,10 @@ func (p *Pingu) Stop() {
 	if atomic.LoadUint32(&p.isRun) == 0 {
 		return
 	}
+	// Stop the detectLoop first for initialize p.peers
+	p.stop <- struct{}{}
 	p.peers = make(map[string]bool)
 	atomic.StoreUint32(&p.isRun, 0)
-	p.stop <- struct{}{}
 }
 
 func (p *Pingu) detectLoop() {
