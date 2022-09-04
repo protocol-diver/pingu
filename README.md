@@ -1,6 +1,7 @@
 # PINGU
 This is a simple and tiny heartbeat library with UDP. <br>
 If you need build a server with heartbeat, It could make it your building easier. <br>
+<b>(Only supports communication between internal networks - 2022.09.04)</b>
 
 . <br>
 . <br>
