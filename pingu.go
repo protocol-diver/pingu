@@ -193,7 +193,7 @@ func (p *Pingu) register(rawAddr string) {
 func (p *Pingu) unregister(rawAddr string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.wl[rawAddr] = false
+	delete(p.wl, rawAddr)
 
 	// Avoid the case of staying `peer status is true` forever.
 	delete(p.peers, rawAddr)
