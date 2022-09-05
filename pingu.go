@@ -301,7 +301,7 @@ func (p *Pingu) putState(r map[string]bool) {
 }
 
 func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]bool {
-	result := make(map[string]bool)
+	result := make(map[string]bool, len(addrs))
 	for _, addr := range addrs {
 		result[addr.String()] = false
 		packet := new(PingPacket)
