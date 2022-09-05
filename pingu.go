@@ -194,6 +194,9 @@ func (p *Pingu) unregister(rawAddr string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.wl[rawAddr] = false
+
+	// Avoid the case of staying `peer status is true` forever.
+	delete(p.peers, rawAddr)
 }
 
 func (p *Pingu) pingpong(addr *net.UDPAddr, timeout time.Duration) error {
@@ -206,8 +209,8 @@ func (p *Pingu) pingpong(addr *net.UDPAddr, timeout time.Duration) error {
 		return fmt.Errorf("not registered ip: %v" + rawAddr)
 	}
 
-	p.ping([]*net.UDPAddr{addr}, timeout)
-	if !p.IsAlive(rawAddr) {
+	res := p.ping([]*net.UDPAddr{addr}, timeout)
+	if !res[rawAddr] {
 		return fmt.Errorf("ping-pong failed ip: %v, timeout: %v", rawAddr, timeout)
 	}
 	return nil
@@ -225,6 +228,9 @@ func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, per time.Duration) c
 				// meaningless running goroutines.
 				p.broadcastPing(per)
 			case <-cancel:
+				p.mu.Lock()
+				p.peers = make(map[string]bool)
+				p.mu.Unlock()
 				return
 			}
 		}
@@ -278,14 +284,26 @@ func (p *Pingu) broadcast(t byte, timeout time.Duration) {
 	}
 	switch t {
 	case PingType:
-		p.ping(addrs, timeout)
+		p.putState(p.ping(addrs, timeout))
 	default:
 		panic(fmt.Sprintf("[pingu] detected invalid protocol: invalid packet type %v", t))
 	}
 }
 
-func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) {
+func (p *Pingu) putState(r map[string]bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for addr, stat := range r {
+		if p.wl[addr] {
+			p.peers[addr] = stat
+		}
+	}
+}
+
+func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]bool {
+	result := make(map[string]bool)
 	for _, addr := range addrs {
+		result[addr.String()] = false
 		packet := new(PingPacket)
 		packet.SetKind(Ping)
 		byt, _ := SuitableUnpack(packet)
@@ -296,45 +314,13 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) {
 		}
 	}
 
-	// The snapshot that marking the changed peer status. If get 'pong',
-	// remove sender from snapshot. This means that peers that did not
-	// send a response to the PING remain in the snapshot.
-	p.mu.Lock()
-	tempSnapTable := p.snapPingTable()
-	p.mu.Unlock()
-
-	// This is the case that not requesting a heartbeat for all peers.
-	// For update only requested peers.
-	if len(addrs) != len(tempSnapTable) {
-		t := make(map[string]bool, len(addrs))
-		for _, addr := range addrs {
-			rawAddr := addr.String()
-			t[rawAddr] = tempSnapTable[rawAddr]
-		}
-		tempSnapTable = t
-	}
-
 	timer := time.NewTimer(timeout)
 	for {
 		select {
 		case <-timer.C:
-			p.mu.Lock()
-			defer p.mu.Unlock()
-			for rawAdrr := range tempSnapTable {
-				p.peers[rawAdrr] = false
-			}
-			if p.cfg.Verbose {
-				fmt.Println("[pingu] ", p.snapPingTable())
-			}
-			return
+			return result
 		case r := <-p.recvPongs:
-			rawAddr := (*r.Sender()).String()
-			p.mu.Lock()
-			if p.wl[rawAddr] {
-				p.peers[rawAddr] = true
-			}
-			p.mu.Unlock()
-			delete(tempSnapTable, rawAddr)
+			result[r.Sender().String()] = true
 		}
 	}
 }
