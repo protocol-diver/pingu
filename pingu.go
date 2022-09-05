@@ -296,13 +296,9 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 	result := make(map[string]bool, len(addrs))
 	for _, addr := range addrs {
 		result[addr.String()] = false
-		packet := new(PingPacket)
-		packet.SetKind(Ping)
-		byt, _ := SuitableUnpack(packet)
-
-		if _, err := p.conn.WriteToUDP(byt, addr); err != nil {
+		if _, err := sendPacket(p.conn, addr, new(PingPacket)); err != nil {
 			fmt.Println(err)
-			break
+			continue
 		}
 	}
 
@@ -319,15 +315,19 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 
 func (p *Pingu) pong(addrs []*net.UDPAddr) {
 	for _, addr := range addrs {
-		packet := new(PongPacket)
-		packet.SetKind(Pong)
-		byt, _ := SuitableUnpack(packet)
-
-		if _, err := p.conn.WriteToUDP(byt, addr); err != nil {
+		if _, err := sendPacket(p.conn, addr, new(PongPacket)); err != nil {
 			fmt.Println(err)
 			continue
 		}
 	}
+}
+
+func sendPacket(conn *net.UDPConn, addr *net.UDPAddr, p Packet) (int, error) {
+	byt, err := SuitableUnpack(p)
+	if err != nil {
+		return 0, err
+	}
+	return conn.WriteToUDP(byt, addr)
 }
 
 // [Benchmark]

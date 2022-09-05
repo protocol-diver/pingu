@@ -94,10 +94,10 @@ func TestSuitableUnpack(t *testing.T) {
 		err    string
 	}
 	tdl := []td{
-		{got: packet(pingu.Ping, new(pingu.PingPacket)), expect: []byte{0, 2, 123, 125}, err: ""},
-		{got: packet(pingu.Pong, new(pingu.PongPacket)), expect: []byte{1, 2, 123, 125}, err: ""},
-		{got: packet(2, new(pingu.PongPacket)), expect: nil, err: "invalid packet type: 2"},
-		{got: packet(3, new(pingu.PongPacket)), expect: nil, err: "invalid packet type: 3"},
+		{got: new(pingu.PingPacket), expect: []byte{0, 2, 123, 125}, err: ""},
+		{got: new(pingu.PongPacket), expect: []byte{1, 2, 123, 125}, err: ""},
+		{got: new(pingu.PongPacket), expect: nil, err: "invalid packet type: 2"},
+		{got: new(pingu.PongPacket), expect: nil, err: "invalid packet type: 3"},
 	}
 
 	for _, td := range tdl {
@@ -115,6 +115,5 @@ func TestSuitableUnpack(t *testing.T) {
 }
 
 func packet(typ byte, packet pingu.Packet) pingu.Packet {
-	packet.SetKind(typ)
 	return packet
 }

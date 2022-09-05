@@ -44,7 +44,6 @@ func main() {
 		for i := 0; i < count; i++ {
 			go func() {
 				ping := new(pingu.PingPacket)
-				ping.SetKind(pingu.Ping)
 				b, _ := pingu.SuitableUnpack(ping)
 				if _, err := client.WriteToUDP(b, net.UDPAddrFromAddrPort(netip.MustParseAddrPort("127.0.0.1:8771"))); err != nil {
 					return

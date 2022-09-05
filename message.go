@@ -24,18 +24,15 @@ const (
 type Packet interface {
 	SetSender(s *net.UDPAddr)
 	Sender() *net.UDPAddr
-	SetKind(k byte)
 	Kind() byte
 }
 
 type PingPacket struct {
 	sender *net.UDPAddr
-	kind   byte
 }
 
 type PongPacket struct {
 	sender *net.UDPAddr
-	kind   byte
 }
 
 // ParsePacket parses packets received by other pingus.
@@ -54,7 +51,6 @@ func ParsePacket(d []byte, sender *net.UDPAddr) (Packet, error) {
 		return nil, err
 	}
 	r.SetSender(sender)
-	r.SetKind(d[packetTypeIndex])
 	return r, nil
 }
 
@@ -104,10 +100,8 @@ func isValidPacketType(b byte) bool {
 
 func (p *PingPacket) SetSender(s *net.UDPAddr) { p.sender = s }
 func (p *PingPacket) Sender() *net.UDPAddr     { return p.sender }
-func (p *PingPacket) SetKind(k byte)           { p.kind = k }
-func (p *PingPacket) Kind() byte               { return p.kind }
+func (p *PingPacket) Kind() byte               { return Ping }
 
 func (p *PongPacket) SetSender(s *net.UDPAddr) { p.sender = s }
 func (p *PongPacket) Sender() *net.UDPAddr     { return p.sender }
-func (p *PongPacket) SetKind(k byte)           { p.kind = k }
-func (p *PongPacket) Kind() byte               { return p.kind }
+func (p *PongPacket) Kind() byte               { return Pong }
