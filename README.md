@@ -47,7 +47,7 @@ if err := myPingu.RegisterWithRawAddr("127.0.0.1:4876"); err != nil {
 ```go
 myPingu.Start()
 
-ticket := time.Ticker(5 * time.Second)
+ticker := time.Ticker(5 * time.Second)
 // Second param is time limit of send ping -> recv pong.
 cancel, err := myPingu.BroadcastPingWithTicker(*ticker, 3*time.Second)
 if err != nil {
