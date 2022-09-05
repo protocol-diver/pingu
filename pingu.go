@@ -210,7 +210,7 @@ func (p *Pingu) pingpong(addr *net.UDPAddr, timeout time.Duration) error {
 
 // Send broadcast with ticker.
 func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, per time.Duration) chan struct{} {
-	var cancel chan struct{}
+	cancel := make(chan struct{})
 	go func() {
 		for {
 			select {
