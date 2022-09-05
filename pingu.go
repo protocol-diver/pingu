@@ -201,14 +201,6 @@ func (p *Pingu) unregister(rawAddr string) {
 
 func (p *Pingu) pingpong(addr *net.UDPAddr, timeout time.Duration) error {
 	rawAddr := addr.String()
-	p.mu.Lock()
-	registered := p.wl[rawAddr]
-	p.mu.Unlock()
-
-	if !registered {
-		return fmt.Errorf("not registered ip: %v" + rawAddr)
-	}
-
 	res := p.ping([]*net.UDPAddr{addr}, timeout)
 	if !res[rawAddr] {
 		return fmt.Errorf("ping-pong failed ip: %v, timeout: %v", rawAddr, timeout)
