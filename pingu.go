@@ -93,6 +93,14 @@ func (p *Pingu) Stop() {
 	atomic.StoreUint32(&p.isRun, 0)
 }
 
+func (p *Pingu) Close(cancels ...chan struct{}) error {
+	p.Stop()
+	for _, cancel := range cancels {
+		cancel <- struct{}{}
+	}
+	return p.conn.Close()
+}
+
 func (p *Pingu) detectLoop() {
 	for {
 		select {
@@ -109,7 +117,7 @@ func (p *Pingu) detectLoop() {
 			}
 			if err != nil {
 				if p.cfg.Verbose {
-					fmt.Printf("[pingu] ReadFromUDP error %v", err)
+					fmt.Printf("[pingu] ReadFromUDP error %v\n", err)
 				}
 				continue
 			}
@@ -143,6 +151,16 @@ func (p *Pingu) RemoteAddr() net.Addr {
 
 func (p *Pingu) LocalAddr() net.Addr {
 	return p.conn.LocalAddr()
+}
+
+func (p *Pingu) Pingus() []string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	res := make([]string, 0, len(p.wl))
+	for rawAddr := range p.wl {
+		res = append(res, rawAddr)
+	}
+	return res
 }
 
 // Register is register to broadcast list that input address.
@@ -235,7 +253,7 @@ func (p *Pingu) broadcastPing(timeout time.Duration) {
 	if timeout == 0 {
 		timeout = 5 * time.Second
 	}
-	go p.broadcast(PingType, timeout)
+	p.broadcast(PingType, timeout)
 }
 
 func (p *Pingu) IsAlive(raw string) bool {
