@@ -8,6 +8,7 @@ package pingu
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"net/netip"
 	"sync"
@@ -75,6 +76,7 @@ func NewPingu(rawAddr string, cfg *Config) (*Pingu, error) {
 	}, nil
 }
 
+// Start starts loop for controll the packets.
 func (p *Pingu) Start() {
 	if atomic.LoadUint32(&p.isRun) == 1 {
 		return
@@ -83,6 +85,8 @@ func (p *Pingu) Start() {
 	go p.detectLoop()
 }
 
+// Stop stops the packet controll loop. If you stop the Pingu, it
+// will clears the peer state map.
 func (p *Pingu) Stop() {
 	if atomic.LoadUint32(&p.isRun) == 0 {
 		return
@@ -106,7 +110,7 @@ func (p *Pingu) detectLoop() {
 		select {
 		case <-p.stop:
 			if p.cfg.Verbose {
-				fmt.Println("[pingu] recv close signal")
+				log.Println("[pingu] recv close signal")
 			}
 			return
 		default:
@@ -117,7 +121,7 @@ func (p *Pingu) detectLoop() {
 			}
 			if err != nil {
 				if p.cfg.Verbose {
-					fmt.Printf("[pingu] ReadFromUDP error %v\n", err)
+					log.Printf("[pingu] ReadFromUDP error %v\n", err)
 				}
 				continue
 			}
@@ -128,7 +132,7 @@ func (p *Pingu) detectLoop() {
 				packet, err := ParsePacket(b, sender)
 				if err != nil {
 					if p.cfg.Verbose {
-						fmt.Printf("[pingu] detected invalid protocol, reason : %v\n", err)
+						log.Printf("[pingu] detected invalid protocol, reason : %v\n", err)
 					}
 					return
 				}
@@ -138,7 +142,8 @@ func (p *Pingu) detectLoop() {
 				case Pong:
 					p.recvPongs <- packet
 				default:
-					panic(fmt.Sprintf("[pingu] detected invalid protocol: invalid packet type %v", packet.Kind()))
+					log.Printf("[pingu] detected invalid protocol: invalid packet type %v\n", packet.Kind())
+					return
 				}
 			}(sender)
 		}
@@ -288,7 +293,7 @@ func (p *Pingu) broadcast(t byte, timeout time.Duration) {
 	p.mu.Unlock()
 	if len(addrs) == 0 {
 		if p.cfg.Verbose {
-			fmt.Println("[pingu] there is no target")
+			log.Println("[pingu] there is no target")
 		}
 		return
 	}
