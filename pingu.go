@@ -52,7 +52,7 @@ func DefaultAddress() string {
 }
 
 // Pingu is not accept double use to net.UDPConn. It's should only be used once.
-// For avoid confuse, generate net.UDPConn in NewPingu.
+// Generate net.UDPConn in NewPingu to avoid confusion.
 func NewPingu(rawAddr string, cfg *Config) (*Pingu, error) {
 	conn, err := listenWithRawAddr(rawAddr)
 	if err != nil {
