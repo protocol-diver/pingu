@@ -332,6 +332,7 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 			return result
 		case r := <-p.recvPongs:
 			result[r.Sender().String()] = true
+			// TODO: Pre-returns if receive all pongs even if the timeout has not been exceeded.
 		}
 	}
 }
