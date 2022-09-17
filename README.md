@@ -64,7 +64,7 @@ fmt.Println(myPingu.PingTable())
 table := myPingu.PingTable()
 // true: target's Pingu is healthy
 // false: target's Pingu is unhealthy
-fmt.Printlnt(table["127.0.0.1:8552"])
+fmt.Println(table["127.0.0.1:8552"])
 ```
 
 ### Controll the Pingu
