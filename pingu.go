@@ -320,19 +320,24 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 	for _, addr := range addrs {
 		result[addr.String()] = false
 		if _, err := sendPacket(p.conn, addr, new(PingPacket)); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			continue
 		}
 	}
 
 	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 	for {
 		select {
 		case <-timer.C:
 			return result
 		case r := <-p.recvPongs:
 			result[r.Sender().String()] = true
-			// TODO: Pre-returns if receive all pongs even if the timeout has not been exceeded.
+			
+			// early returns if receive all pongs before timeout reached
+			if len(result) == len(addrs) {
+				return result
+			}
 		}
 	}
 }
@@ -340,7 +345,7 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 func (p *Pingu) pong(addrs []*net.UDPAddr) {
 	for _, addr := range addrs {
 		if _, err := sendPacket(p.conn, addr, new(PongPacket)); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			continue
 		}
 	}
