@@ -96,8 +96,6 @@ func TestSuitableUnpack(t *testing.T) {
 	tdl := []td{
 		{got: new(pingu.PingPacket), expect: []byte{0, 2, 123, 125}, err: ""},
 		{got: new(pingu.PongPacket), expect: []byte{1, 2, 123, 125}, err: ""},
-		{got: new(pingu.PongPacket), expect: nil, err: "invalid packet type: 2"},
-		{got: new(pingu.PongPacket), expect: nil, err: "invalid packet type: 3"},
 	}
 
 	for _, td := range tdl {

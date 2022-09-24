@@ -1,7 +1,10 @@
 package pingu_test
 
 import (
+	"net"
+	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/dbadoy/pingu"
 )
@@ -28,5 +31,89 @@ func TestNewPinguAddr(t *testing.T) {
 			}
 			continue
 		}
+	}
+}
+
+func TestPingPong(t *testing.T) {
+	pingu1, err := pingu.NewPingu("127.0.0.1:9190", nil)
+	if err != nil {
+		t.Fatalf("PingPong NewPingu failure %v", err)
+	}
+	defer pingu1.Close()
+	pingu2, err := pingu.NewPingu("127.0.0.1:9191", nil)
+	if err != nil {
+		t.Fatalf("PingPong NewPingu failure %v", err)
+	}
+	defer pingu2.Close()
+
+	pingu1.Start()
+	pingu2.Start()
+
+	// PingPongWithRawAddr
+	err = pingu1.PingPongWithRawAddr("127.0.0.1:9191", 100*time.Millisecond)
+	if err != nil {
+		t.Fatalf("PingPong failure got: %v", err)
+	}
+	// pingpong to unknown pingu
+	err = pingu1.PingPongWithRawAddr("127.0.0.1:9195", 100*time.Millisecond)
+	if err == nil {
+		t.Fatalf("PingPong failure got: %v", err)
+	}
+	// check the duration
+	now := time.Now()
+	err = pingu1.PingPongWithRawAddr("127.0.0.1:9195", 100*time.Millisecond)
+	if err == nil {
+		t.Fatalf("PingPong failure got: %v", err)
+	}
+	spent := time.Since(now)
+	if spent < 100*time.Millisecond {
+		t.Fatalf("PingPong failure: incorrect act about pingpong timeout")
+	}
+
+	// PingPong
+	rawAddr := netip.MustParseAddrPort("127.0.0.1:9191")
+	err = pingu1.PingPong(net.UDPAddrFromAddrPort(rawAddr), 100*time.Millisecond)
+	if err != nil {
+		t.Fatalf("PingPong failure got: %v", err)
+	}
+	// pingpong to unknown pingu
+	rawAddr = netip.MustParseAddrPort("127.0.0.1:9195")
+	err = pingu1.PingPong(net.UDPAddrFromAddrPort(rawAddr), 100*time.Millisecond)
+	if err == nil {
+		t.Fatalf("PingPong failure got: %v", err)
+	}
+}
+
+func TestRegister(t *testing.T) {
+	pingu1, err := pingu.NewPingu("127.0.0.1:9190", nil)
+	if err != nil {
+		t.Fatalf("Register NewPingu failure %v", err)
+	}
+	defer pingu1.Close()
+
+	if err := pingu1.RegisterWithRawAddr("127.0.0.1:9191"); err != nil {
+		t.Fatalf("Register RegisterWithRawAddr failure : %v", err)
+	}
+	if err := pingu1.RegisterWithRawAddr("127.0.0.1:9192"); err != nil {
+		t.Fatalf("Register RegisterWithRawAddr failure : %v", err)
+	}
+	if err := pingu1.RegisterWithRawAddr("127.0.0.1:9193"); err != nil {
+		t.Fatalf("Register RegisterWithRawAddr failure : %v", err)
+	}
+	if len(pingu1.Pingus()) != 3 {
+		t.Fatalf("PingPong failure got: %v, want : %v", len(pingu1.Pingus()), 3)
+	}
+
+	if err := pingu1.UnregisterWithRawAddr("127.0.0.1:9191"); err != nil {
+		t.Fatalf("Register UnregisterWithRawAddr failure : %v", err)
+	}
+	if err := pingu1.UnregisterWithRawAddr("127.0.0.1:9192"); err != nil {
+		t.Fatalf("Register UnregisterWithRawAddr failure : %v", err)
+	}
+	if err := pingu1.UnregisterWithRawAddr("127.0.0.1:9193"); err != nil {
+		t.Fatalf("Register UnregisterWithRawAddr failure : %v", err)
+	}
+	if len(pingu1.Pingus()) != 0 {
+		t.Fatalf("PingPong failure got: %v, want : %v", 0, len(pingu1.Pingus()))
 	}
 }
