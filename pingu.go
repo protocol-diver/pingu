@@ -325,6 +325,8 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 		}
 	}
 
+	receiveCount := 0
+
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 	for {
@@ -333,9 +335,10 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 			return result
 		case r := <-p.recvPongs:
 			result[r.Sender().String()] = true
-			
+			receiveCount++
+
 			// early returns if receive all pongs before timeout reached
-			if len(result) == len(addrs) {
+			if receiveCount == len(addrs) {
 				return result
 			}
 		}
