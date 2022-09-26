@@ -117,3 +117,46 @@ func TestRegister(t *testing.T) {
 		t.Fatalf("PingPong failure got: %v, want : %v", 0, len(pingu1.Pingus()))
 	}
 }
+
+func TestBroadcastPingWithTicker(t *testing.T) {
+	pingu1, err := pingu.NewPingu("127.0.0.1:9190", nil)
+	if err != nil {
+		t.Fatalf("BroadcastPingWithTicker NewPingu failure %v", err)
+	}
+	defer pingu1.Close()
+	pingu2, err := pingu.NewPingu("127.0.0.1:9191", nil)
+	if err != nil {
+		t.Fatalf("BroadcastPingWithTicker NewPingu failure %v", err)
+	}
+	defer pingu2.Close()
+
+	pingu1.Start()
+	pingu2.Start()
+
+	pingu1.RegisterWithRawAddr("127.0.0.1:9191")
+	pingu1.RegisterWithRawAddr("127.0.0.1:9192")
+
+	want := make(map[string]bool)
+	want["127.0.0.1:9191"] = true
+	want["127.0.0.1:9192"] = false
+
+	cancel := pingu1.BroadcastPingWithTicker(*time.NewTicker(10 * time.Millisecond), 10*time.Millisecond)
+
+	_ = cancel
+
+	time.Sleep(50 * time.Millisecond)
+	table := pingu1.PingTable()
+	if !table["127.0.0.1:9191"] {
+		t.Fatalf("BroadcastPingWithTicker invalid result: %v, want: %v", table, want)
+	}
+	if table["127.0.0.1:9192"] {
+		t.Fatalf("BroadcastPingWithTicker invalid result: %v, want: %v", table, want)
+	}
+
+	close(cancel)
+	time.Sleep(50 * time.Millisecond)
+	table = pingu1.PingTable()
+	if len(table) != 0 {
+		t.Fatalf("BroadcastPingWithTicker invalid result length: %v, want: %v", len(table), 0)
+	}
+}
