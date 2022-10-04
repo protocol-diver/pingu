@@ -97,6 +97,7 @@ func (p *Pingu) Stop() {
 	atomic.StoreUint32(&p.isRun, 0)
 }
 
+// Close is close the UDP connection and close cancel channels.
 func (p *Pingu) Close(cancels ...chan struct{}) error {
 	p.Stop()
 	for _, cancel := range cancels {
@@ -158,6 +159,7 @@ func (p *Pingu) LocalAddr() net.Addr {
 	return p.conn.LocalAddr()
 }
 
+// Pingus returns registered pingus's raw addresses.
 func (p *Pingu) Pingus() []string {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -238,10 +240,10 @@ func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, per time.Duration) c
 		for {
 			select {
 			case <-ticker.C:
-				// If 'per' greater than ticker duration, ticker wait broadcasePing done.
-				// Do not call broadcastPing by goroutine. If you use goroutine, will accumulate
+				// If 'per' greater than ticker duration, ticker wait broadcase done.
+				// Do not call broadcast by goroutine. If you use goroutine, will accumulate
 				// meaningless running goroutines.
-				p.broadcastPing(per)
+				p.broadcast(PingType, per)
 			case <-cancel:
 				p.mu.Lock()
 				p.peers = make(map[string]bool)
@@ -253,20 +255,13 @@ func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, per time.Duration) c
 	return cancel
 }
 
-// Do not call by goroutine. It's running it once is enough.
-func (p *Pingu) broadcastPing(timeout time.Duration) {
-	if timeout == 0 {
-		timeout = 5 * time.Second
-	}
-	p.broadcast(PingType, timeout)
-}
-
 func (p *Pingu) IsAlive(raw string) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	return p.peers[raw]
 }
 
+// PingTable returns recently peer status map.
 func (p *Pingu) PingTable() map[string]bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -305,6 +300,7 @@ func (p *Pingu) broadcast(t byte, timeout time.Duration) {
 	}
 }
 
+// putState updates recently status map
 func (p *Pingu) putState(r map[string]bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
