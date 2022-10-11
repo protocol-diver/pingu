@@ -343,10 +343,12 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 
 func (p *Pingu) pong(addrs []*net.UDPAddr) {
 	for _, addr := range addrs {
-		if _, err := sendPacket(p.conn, addr, new(PongPacket)); err != nil {
-			log.Println(err)
-			continue
-		}
+		go func(target *net.UDPAddr) {
+			if _, err := sendPacket(p.conn, target, new(PongPacket)); err != nil {
+				log.Println(err)
+				return
+			}
+		}(addr)
 	}
 }
 
