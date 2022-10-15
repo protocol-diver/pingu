@@ -240,7 +240,7 @@ func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, timeout time.Duratio
 		for {
 			select {
 			case <-ticker.C:
-				// If 'per' greater than ticker duration, ticker wait broadcase done.
+				// If 'timeout' greater than ticker duration, ticker wait broadcast done.
 				// Do not call broadcast by goroutine. If you use goroutine, will accumulate
 				// meaningless running goroutines.
 				p.broadcast(PingType, timeout)
