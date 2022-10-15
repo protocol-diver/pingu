@@ -234,7 +234,7 @@ func (p *Pingu) pingpong(addr *net.UDPAddr, timeout time.Duration) error {
 }
 
 // Send broadcast with ticker.
-func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, per time.Duration) chan struct{} {
+func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, timeout time.Duration) chan struct{} {
 	cancel := make(chan struct{})
 	go func() {
 		for {
@@ -243,7 +243,7 @@ func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, per time.Duration) c
 				// If 'per' greater than ticker duration, ticker wait broadcase done.
 				// Do not call broadcast by goroutine. If you use goroutine, will accumulate
 				// meaningless running goroutines.
-				p.broadcast(PingType, per)
+				p.broadcast(PingType, timeout)
 			case <-cancel:
 				p.mu.Lock()
 				p.peers = make(map[string]bool)
