@@ -127,9 +127,7 @@ func (p *Pingu) detectLoop() {
 				continue
 			}
 
-			// Set sender when before start goroutine.
-			// Not after started goroutine. It may not thread safety.
-			go func(sender *net.UDPAddr) {
+			go func() {
 				packet, err := ParsePacket(b, sender)
 				if err != nil {
 					if p.cfg.Verbose {
@@ -146,7 +144,7 @@ func (p *Pingu) detectLoop() {
 					log.Printf("[pingu] detected invalid protocol: invalid packet type %v\n", packet.Kind())
 					return
 				}
-			}(sender)
+			}()
 		}
 	}
 }
