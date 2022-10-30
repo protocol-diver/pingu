@@ -1,8 +1,9 @@
 # PINGU [![GoDoc](https://godoc.org/github.com/dbadoy/pingu?status.svg)](https://godoc.org/github.com/dbadoy/pingu)
 
 This is a simple and tiny heartbeat library with UDP. <br>
-If you need build a server with heartbeat, It could make it your building easier. <br>
-<b>(Only supports communication between internal networks)</b>
+Heartbeat is a message that checks if you are healthy or if other connected peers are healthy. The core feature is to periodically request a heartbeat and send an 'alive' message when a heartbeat request is received. Also need to surface a method that allows the user to check the health status. <br>
+It could make it your building easier when you need build a server with heartbeat.<br>
+If you need heartbeat communication with an external network among peers, register the public IP obtained through a process such as hole punching.
 
 ## Install
 ```
