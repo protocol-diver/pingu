@@ -3,7 +3,7 @@
 This is a simple and tiny heartbeat library with UDP. <br>
 Heartbeat is a message that checks if you are healthy or if other connected peers are healthy. The core feature is to periodically request a heartbeat and send an 'alive' message when a heartbeat request is received. Also need to surface a method that allows the user to check the health status. <br>
 It could make it your building easier when you need build a server with heartbeat.<br>
-If you need heartbeat communication with an external network among peers, register the public IP obtained through a process such as hole punching.
+If you need heartbeat communication with an external network among peers, register the public IP obtained through a process such as hole punching(<b>This library does not support communication across NAT</b>).
 
 ## Install
 ```
