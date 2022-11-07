@@ -1,4 +1,4 @@
-# PINGU [![GoDoc](https://godoc.org/github.com/dbadoy/pingu?status.svg)](https://godoc.org/github.com/dbadoy/pingu)
+# PINGU [![GoDoc](https://godoc.org/github.com/protocol-diver/pingu?status.svg)](https://godoc.org/github.com/dbadoy/pingu)
 
 This is a simple and tiny heartbeat library with UDP. <br>
 Heartbeat is a message that checks if you are healthy or if other connected peers are healthy. The core feature is to periodically request a heartbeat and send an 'alive' message when a heartbeat request is received. Also need to surface a method that allows the user to check the health status. <br>
