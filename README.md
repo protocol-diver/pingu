@@ -7,7 +7,7 @@ If you need heartbeat communication with an external network among peers, regist
 
 ## Install
 ```
-$ go get -u github.com/dbadoy/pingu
+$ go get -u github.com/protocol-diver/pingu
 ```
 
 ## Usage
