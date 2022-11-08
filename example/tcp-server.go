@@ -5,7 +5,7 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/dbadoy/pingu"
+	"github.com/protocol-diver/pingu"
 )
 
 type TCPServer struct {

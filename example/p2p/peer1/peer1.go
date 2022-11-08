@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dbadoy/pingu"
+	"github.com/protocol-diver/pingu"
 )
 
 func main() {

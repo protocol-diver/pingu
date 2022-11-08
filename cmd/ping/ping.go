@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dbadoy/pingu"
+	"github.com/protocol-diver/pingu"
 )
 
 // go run ping.go --timeout 1000 127.0.0.1:1111

@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dbadoy/pingu"
+	"github.com/protocol-diver/pingu"
 )
 
 func main() {

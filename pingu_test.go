@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dbadoy/pingu"
+	"github.com/protocol-diver/pingu"
 )
 
 func TestNewPinguAddr(t *testing.T) {

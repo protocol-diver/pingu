@@ -3,7 +3,7 @@ package pingu_test
 import (
 	"testing"
 
-	"github.com/dbadoy/pingu"
+	"github.com/protocol-diver/pingu"
 )
 
 func TestConfigDeafult(t *testing.T) {
