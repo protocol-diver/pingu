@@ -37,4 +37,4 @@ func (s *TCPServer) stat() map[string]bool {
 	return s.pingu.PingTable()
 }
 
-// ... TCP controll logics ~
+// ... TCP control logics ~

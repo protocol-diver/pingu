@@ -76,7 +76,7 @@ func NewPingu(rawAddr string, cfg *Config) (*Pingu, error) {
 	}, nil
 }
 
-// Start starts loop for controll the packets.
+// Start starts loop for control the packets.
 func (p *Pingu) Start() {
 	if atomic.LoadUint32(&p.isRun) == 1 {
 		return
@@ -85,7 +85,7 @@ func (p *Pingu) Start() {
 	go p.detectLoop()
 }
 
-// Stop stops the packet controll loop. If you stop the Pingu, it
+// Stop stops the packet control loop. If you stop the Pingu, it
 // will clears the peer state map.
 func (p *Pingu) Stop() {
 	if atomic.LoadUint32(&p.isRun) == 0 {
