@@ -1,6 +1,6 @@
 // // DO NOT USE THIS
 
-// package main
+package main
 
 // import (
 // 	"flag"
