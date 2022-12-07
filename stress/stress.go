@@ -2,6 +2,9 @@
 
 package main
 
+func main() {
+}
+
 // import (
 // 	"flag"
 // 	"fmt"
