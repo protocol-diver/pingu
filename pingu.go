@@ -17,10 +17,10 @@ import (
 )
 
 const (
-	PingType = 1 + iota
+	pingType = 1 + iota
 	// NotificationType
 
-	MaxPacketSize = 4
+	maxPacketSize = 4
 
 	localhost   = "127.0.0.1"
 	defaultPort = 4874
@@ -39,7 +39,7 @@ type Pingu struct {
 	// The health status set when the ping-pong request completes
 	peers map[string]bool
 
-	recvPongs chan Packet
+	recvPongs chan packet
 
 	isRun uint32
 	mu    sync.Mutex
@@ -72,7 +72,7 @@ func NewPingu(rawAddr string, cfg *Config) (*Pingu, error) {
 		wl:        make(map[string]bool),
 		peers:     make(map[string]bool),
 		stop:      make(chan struct{}, 1),
-		recvPongs: make(chan Packet, cfg.RecvBufferSize),
+		recvPongs: make(chan packet, cfg.RecvBufferSize),
 	}, nil
 }
 
@@ -115,7 +115,7 @@ func (p *Pingu) detectLoop() {
 			}
 			return
 		default:
-			b := make([]byte, MaxPacketSize)
+			b := make([]byte, maxPacketSize)
 			size, sender, err := p.conn.ReadFromUDP(b)
 			if size == 0 {
 				continue
@@ -128,7 +128,7 @@ func (p *Pingu) detectLoop() {
 			}
 
 			go func() {
-				packet, err := ParsePacket(b, sender)
+				packet, err := parsePacket(b, sender)
 				if err != nil {
 					if p.cfg.Verbose {
 						log.Printf("[pingu] detected invalid protocol, reason : %v\n", err)
@@ -136,9 +136,9 @@ func (p *Pingu) detectLoop() {
 					return
 				}
 				switch packet.Kind() {
-				case Ping:
+				case ping:
 					go p.pong([]*net.UDPAddr{sender})
-				case Pong:
+				case pong:
 					p.recvPongs <- packet
 				default:
 					log.Printf("[pingu] detected invalid protocol: invalid packet type %v\n", packet.Kind())
@@ -241,7 +241,7 @@ func (p *Pingu) BroadcastPingWithTicker(ticker time.Ticker, timeout time.Duratio
 				// If 'timeout' greater than ticker duration, ticker wait broadcast done.
 				// Do not call broadcast by goroutine. If you use goroutine, will accumulate
 				// meaningless running goroutines.
-				p.broadcast(PingType, timeout)
+				p.broadcast(pingType, timeout)
 			case <-cancel:
 				p.mu.Lock()
 				p.peers = make(map[string]bool)
@@ -291,7 +291,7 @@ func (p *Pingu) broadcast(t byte, timeout time.Duration) {
 		return
 	}
 	switch t {
-	case PingType:
+	case pingType:
 		p.putState(p.ping(addrs, timeout))
 	default:
 		panic(fmt.Sprintf("[pingu] detected invalid protocol: invalid packet type %v", t))
@@ -313,7 +313,7 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 	result := make(map[string]bool, len(addrs))
 	for _, addr := range addrs {
 		result[addr.String()] = false
-		if _, err := sendPacket(p.conn, addr, new(PingPacket)); err != nil {
+		if _, err := sendPacket(p.conn, addr, new(pingPacket)); err != nil {
 			log.Println(err)
 			continue
 		}
@@ -342,7 +342,7 @@ func (p *Pingu) ping(addrs []*net.UDPAddr, timeout time.Duration) map[string]boo
 func (p *Pingu) pong(addrs []*net.UDPAddr) {
 	for _, addr := range addrs {
 		go func(target *net.UDPAddr) {
-			if _, err := sendPacket(p.conn, target, new(PongPacket)); err != nil {
+			if _, err := sendPacket(p.conn, target, new(pongPacket)); err != nil {
 				log.Println(err)
 				return
 			}
@@ -350,8 +350,8 @@ func (p *Pingu) pong(addrs []*net.UDPAddr) {
 	}
 }
 
-func sendPacket(conn *net.UDPConn, addr *net.UDPAddr, p Packet) (int, error) {
-	byt, err := SuitableUnpack(p)
+func sendPacket(conn *net.UDPConn, addr *net.UDPAddr, p packet) (int, error) {
+	byt, err := suitableUnpack(p)
 	if err != nil {
 		return 0, err
 	}

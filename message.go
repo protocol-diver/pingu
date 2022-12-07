@@ -13,49 +13,49 @@ import (
 )
 
 const (
-	Ping = iota
-	Pong
+	ping = iota
+	pong
 
 	packetTypeIndex = 0
 	packetSizeIndex = 1
 	prefixSize      = 2
 )
 
-type Packet interface {
+type packet interface {
 	SetSender(s *net.UDPAddr)
 	Sender() *net.UDPAddr
 	Kind() byte
 }
 
-type PingPacket struct {
+type pingPacket struct {
 	sender *net.UDPAddr
 }
 
-type PongPacket struct {
+type pongPacket struct {
 	sender *net.UDPAddr
 }
 
-// ParsePacket parses packets received by other pingus.
-func ParsePacket(d []byte, sender *net.UDPAddr) (Packet, error) {
-	var r Packet
+// parsePacket parses packets received by other pingus.
+func parsePacket(d []byte, sender *net.UDPAddr) (packet, error) {
+	var r packet
 	switch d[packetTypeIndex] {
-	case Ping:
-		r = new(PingPacket)
-	case Pong:
-		r = new(PongPacket)
+	case ping:
+		r = new(pingPacket)
+	case pong:
+		r = new(pongPacket)
 	default:
 		return nil, fmt.Errorf("invalid packet type: %d", d[packetTypeIndex])
 	}
 
-	if err := SuitablePack(d, r); err != nil {
+	if err := suitablePack(d, r); err != nil {
 		return nil, err
 	}
 	r.SetSender(sender)
 	return r, nil
 }
 
-// SuitablePack is the logic for parse the UDP Payload.
-func SuitablePack(b []byte, packet Packet) error {
+// suitablePack is the logic for parse the UDP Payload.
+func suitablePack(b []byte, packet packet) error {
 	if !isValidPacketType(b[packetTypeIndex]) {
 		return fmt.Errorf("invalid packet type: %d", b[packetTypeIndex])
 	}
@@ -69,9 +69,9 @@ func SuitablePack(b []byte, packet Packet) error {
 	return nil
 }
 
-// SuitableUnpack is change Packet to suitable protocol message.
+// suitableUnpack is change Packet to suitable protocol message.
 // If send message, you must use this method.
-func SuitableUnpack(packet Packet) ([]byte, error) {
+func suitableUnpack(packet packet) ([]byte, error) {
 	if !isValidPacketType(packet.Kind()) {
 		return nil, fmt.Errorf("invalid packet type: %d", packet.Kind())
 	}
@@ -89,19 +89,19 @@ func SuitableUnpack(packet Packet) ([]byte, error) {
 
 func isValidPacketType(b byte) bool {
 	switch b {
-	case Ping:
+	case ping:
 		return true
-	case Pong:
+	case pong:
 		return true
 	default:
 		return false
 	}
 }
 
-func (p *PingPacket) SetSender(s *net.UDPAddr) { p.sender = s }
-func (p *PingPacket) Sender() *net.UDPAddr     { return p.sender }
-func (p *PingPacket) Kind() byte               { return Ping }
+func (p *pingPacket) SetSender(s *net.UDPAddr) { p.sender = s }
+func (p *pingPacket) Sender() *net.UDPAddr     { return p.sender }
+func (p *pingPacket) Kind() byte               { return ping }
 
-func (p *PongPacket) SetSender(s *net.UDPAddr) { p.sender = s }
-func (p *PongPacket) Sender() *net.UDPAddr     { return p.sender }
-func (p *PongPacket) Kind() byte               { return Pong }
+func (p *pongPacket) SetSender(s *net.UDPAddr) { p.sender = s }
+func (p *pongPacket) Sender() *net.UDPAddr     { return p.sender }
+func (p *pongPacket) Kind() byte               { return pong }

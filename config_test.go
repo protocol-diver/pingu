@@ -1,25 +1,23 @@
-package pingu_test
+package pingu
 
 import (
 	"testing"
-
-	"github.com/protocol-diver/pingu"
 )
 
 func TestConfigDeafult(t *testing.T) {
 	type td struct {
-		got    pingu.Config
-		expect pingu.Config
+		got    Config
+		expect Config
 	}
 
-	defaultBufferSize := pingu.DefultRecvBufferSize
+	defaultBufferSize := DefultRecvBufferSize
 	tdl := []td{
-		{got: pingu.Config{RecvBufferSize: 5, Verbose: true}, expect: pingu.Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
-		{got: pingu.Config{RecvBufferSize: 3, Verbose: false}, expect: pingu.Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
-		{got: pingu.Config{RecvBufferSize: 80}, expect: pingu.Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
-		{got: pingu.Config{Verbose: true}, expect: pingu.Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
-		{got: pingu.Config{Verbose: false}, expect: pingu.Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
-		{got: pingu.Config{}, expect: pingu.Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
+		{got: Config{RecvBufferSize: 5, Verbose: true}, expect: Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
+		{got: Config{RecvBufferSize: 3, Verbose: false}, expect: Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
+		{got: Config{RecvBufferSize: 80}, expect: Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
+		{got: Config{Verbose: true}, expect: Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
+		{got: Config{Verbose: false}, expect: Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
+		{got: Config{}, expect: Config{RecvBufferSize: defaultBufferSize, Verbose: false}},
 	}
 
 	for _, td := range tdl {
@@ -30,7 +28,7 @@ func TestConfigDeafult(t *testing.T) {
 	}
 }
 
-func compare(a pingu.Config, b pingu.Config) bool {
+func compare(a Config, b Config) bool {
 	if a.RecvBufferSize != b.RecvBufferSize {
 		return false
 	}
